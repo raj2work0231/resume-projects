@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project 1 – Geo-Location Intelligence Platform | Architecture</title>
+  <style>
+    :root { --primary: #1a73e8; --accent: #f97316; --dark: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+    header { background: linear-gradient(135deg, #0f172a, #1b3a6b); padding: 40px 24px; border-bottom: 2px solid var(--accent); }
+    header h1 { font-size: 2rem; font-weight: 700; } header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 8px; max-width: 800px; }
+    .back { display: inline-block; margin: 20px 24px; color: var(--primary); text-decoration: none; font-size: 0.9rem; }
+    .back:hover { color: var(--accent); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+    h2 { font-size: 1.4rem; margin: 40px 0 16px; color: #fff; border-left: 4px solid var(--accent); padding-left: 12px; }
+    p, li { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+    ul { margin-left: 20px; margin-bottom: 12px; }
+    .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 24px 0; overflow-x: auto; }
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 8px 0; }
+    .box { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .box.src { border-color: #7c3aed; color: #a78bfa; }
+    .box.ingest { border-color: var(--primary); color: #60a5fa; }
+    .box.bronze { border-color: #cd7f32; color: #cd7f32; }
+    .box.silver { border-color: #9ca3af; color: #e5e7eb; }
+    .box.gold { border-color: #d97706; color: #fbbf24; }
+    .box.geo { border-color: #10b981; color: #6ee7b7; }
+    .box.serve { border-color: var(--accent); color: var(--accent); }
+    .arrow { color: var(--muted); padding: 0 8px; font-size: 1.1rem; }
+    .layer { background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 12px 0; }
+    .layer h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .layer.l-ingest h4 { color: var(--primary); }
+    .layer.l-bronze h4 { color: #cd7f32; }
+    .layer.l-silver h4 { color: #9ca3af; }
+    .layer.l-gold h4 { color: #fbbf24; }
+    .layer.l-geo h4 { color: #10b981; }
+    .layer.l-serve h4 { color: var(--accent); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 0.78rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.87rem; }
+    th { background: #0f172a; padding: 10px 14px; text-align: left; color: var(--accent); border-bottom: 1px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .code-block { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: 'Consolas', monospace; font-size: 0.82rem; color: #7dd3fc; margin: 12px 0; overflow-x: auto; white-space: pre; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+    .impact-box { background: rgba(249,115,22,0.08); border: 1px solid var(--accent); border-radius: 10px; padding: 20px 24px; margin-top: 32px; }
+    .impact-box h3 { color: var(--accent); margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Geo-Location Intelligence &amp; <span>Advertisement Campaign Platform</span></h1>
+  <p>End-to-end geospatial analytics pipeline on Azure Databricks — from raw network event ingestion to location-based data powering advertisement campaign targeting and analytics.</p>
+</header>
+<a class="back" href="../index.html">← Back to Portfolio</a>
+
+<div class="container">
+
+  <h2>Solution Overview</h2>
+  <p>This platform replaced a deprecated legacy geolocation system with a fully automated pipeline that ingests near-real-time network events via AutoLoader, enriches data with Uber H3 geospatial indexing, Voronoi/sub-Voronoi cell-site mapping, and POI reference data — maintained via SCD Type 2 monthly batch loads tracked at the Silver layer — then aggregates enriched results into Gold ad campaign segment tables. Parent-child notebook orchestration enables concurrent multi-campaign execution at scale.</p>
+
+  <h2>High-Level Architecture</h2>
+  <div class="arch-diagram">
+    <div class="flow">
+      <div class="box src">Network Event Files<br/>(ADLS Gen2)</div>
+      <div class="arrow">→</div>
+      <div class="box ingest">AutoLoader<br/>File-Notification</div>
+      <div class="arrow">→</div>
+      <div class="box bronze">Bronze Layer<br/>Raw Delta Table</div>
+      <div class="arrow">→</div>
+      <div class="box silver">Silver Layer<br/>Standardised Events</div>
+    </div>
+    <div class="flow" style="margin-top:16px">
+      <div class="box silver">Silver Events</div>
+      <div class="arrow">→</div>
+      <div class="box geo">H3 Hexagonal Index<br/>Voronoi Mapping<br/>POI Enrichment</div>
+      <div class="arrow">→</div>
+      <div class="box gold">Gold Layer<br/>Geospatial Ad Campaign<br/>Segments</div>
+      <div class="arrow">→</div>
+      <div class="box serve">Campaign Analytics<br/>Power BI / API</div>
+    </div>
+  </div>
+
+  <h2>Data Layer Breakdown</h2>
+  <div class="layer l-ingest">
+    <h4>Ingestion Layer — AutoLoader (File Notification Mode)</h4>
+    <div class="chips">
+      <span class="chip">ADLS Gen2 Event Queue</span>
+      <span class="chip">Azure Event Grid</span>
+      <span class="chip">AutoLoader cloudFiles</span>
+      <span class="chip">Schema Inference</span>
+      <span class="chip">Checkpointing</span>
+      <span class="chip">Idempotent Writes</span>
+    </div>
+  </div>
+  <div class="layer l-bronze">
+    <h4>Bronze — Raw Delta Table</h4>
+    <div class="chips">
+      <span class="chip">Raw network events</span>
+      <span class="chip">Ingest timestamp</span>
+      <span class="chip">File metadata</span>
+      <span class="chip">MD5 row hash</span>
+      <span class="chip">Partition by ingest_date</span>
+    </div>
+  </div>
+  <div class="layer l-silver">
+    <h4>Silver — Standardised &amp; Validated Events</h4>
+    <div class="chips">
+      <span class="chip">Data type casting</span>
+      <span class="chip">Null / outlier filtering</span>
+      <span class="chip">Deduplication</span>
+      <span class="chip">Lat/Lon validation</span>
+      <span class="chip">Schema enforcement</span>
+    </div>
+    <p style="font-size:0.82rem;color:var(--muted);margin:12px 0 6px"><strong style="color:#9ca3af">POI Reference Data — Monthly Batch Load (SCD Type 2)</strong></p>
+    <div class="chips">
+      <span class="chip">Monthly POI refresh</span>
+      <span class="chip">SCD Type 2 — poi_reference_history</span>
+      <span class="chip">MD5 change detection</span>
+      <span class="chip">MERGE INTO staging → history</span>
+      <span class="chip">eff_from / eff_to / crnt_flag</span>
+    </div>
+  </div>
+  <div class="layer l-geo">
+    <h4>Geospatial Processing <span style="font-weight:400;font-size:0.78rem;color:var(--muted);text-transform:none;letter-spacing:0">(Processing Logic — not a Delta storage layer)</span></h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">In-memory Spark transformations applied to Silver events. No intermediate Delta table is persisted — enriched output is written <strong style="color:#6ee7b7">directly to the Gold layer</strong> tables.</p>
+    <div class="chips">
+      <span class="chip">Uber H3 Resolution 11</span>
+      <span class="chip">Voronoi Cell Sites</span>
+      <span class="chip">Sub-Voronoi Polygons</span>
+      <span class="chip">POI Lookup &amp; Enrichment</span>
+      <span class="chip">OpenStreetMap Perimeter</span>
+      <span class="chip">Spatial Joins</span>
+    </div>
+  </div>
+  <div class="layer l-gold">
+    <h4>Gold — Ad Campaign Segments</h4>
+    <div class="chips">
+      <span class="chip">Enriched Geospatial Segments</span>
+      <span class="chip">Campaign Attribution Metrics</span>
+      <span class="chip">Partition by campaign_id</span>
+      <span class="chip">Delta OPTIMIZE scheduled</span>
+      <span class="chip">Analytics-ready schema</span>
+    </div>
+  </div>
+  <div class="layer l-serve">
+    <h4>Serving Layer</h4>
+    <div class="chips">
+      <span class="chip">Power BI Datasets</span>
+      <span class="chip">FastAPI / Databricks App</span>
+      <span class="chip">Campaign Compute Jobs</span>
+      <span class="chip">Control-M Scheduling</span>
+      <span class="chip">SMTP Alerting</span>
+    </div>
+  </div>
+
+  <h2>Orchestration Pattern</h2>
+  <p>A parent notebook dynamically generates child notebook job submissions per campaign using <code>dbutils.notebook.run()</code> with concurrent threading (Python <code>ThreadPoolExecutor</code>). Each child processes one campaign segment independently, with configurable timeout, retry logic via <strong>tenacity</strong>, and granular status tracking written back to a control Delta table.</p>
+
+  <div class="code-block">Parent Notebook
+├── Load campaign config from Delta control table
+├── ThreadPoolExecutor(max_workers=N)
+│   ├── submit → child_notebook(campaign_id=001, timeout=3600)
+│   ├── submit → child_notebook(campaign_id=002, timeout=3600)
+│   └── submit → child_notebook(campaign_id=00N, timeout=3600)
+└── Collect futures → write execution status to control table
+
+Child Notebook
+├── Read campaign parameters
+├── AutoLoader ingest → Bronze
+├── H3 spatial join → Silver
+├── Write enriched output → Gold
+└── Write status (SUCCESS / FAILED / PARTIAL) → control table</div>
+
+  <h2>SCD Type 2 Implementation</h2>
+  <p>Applied to the <strong>Silver POI reference table</strong> (monthly batch load). POI attributes — name, category, geometry, and type — are tracked over time. Each monthly refresh detects attribute changes via MD5 checksum and creates a new version, preserving full audit history with effective dates.</p>
+  <table>
+    <thead><tr><th>Column</th><th>Type</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>record_key</td><td>STRING</td><td>Natural business key</td></tr>
+      <tr><td>row_hash</td><td>STRING (MD5)</td><td>Detect row-level changes</td></tr>
+      <tr><td>eff_from</td><td>TIMESTAMP</td><td>Record effective start</td></tr>
+      <tr><td>eff_to</td><td>TIMESTAMP</td><td>Record effective end (NULL = current)</td></tr>
+      <tr><td>crnt_flag</td><td>BOOLEAN</td><td>Identifies the current active record</td></tr>
+      <tr><td>inserted_at</td><td>TIMESTAMP</td><td>Audit: pipeline insert time</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Spark Performance Optimisations</h2>
+  <div class="grid2">
+    <div class="layer">
+      <h4 style="color:var(--primary)">Compute Tuning</h4>
+      <ul style="margin-left:16px;margin-top:8px">
+        <li>Adaptive Query Execution (AQE) — dynamic partition coalescing</li>
+        <li>Photon vectorized engine for Delta scan &amp; joins</li>
+        <li>Optimise-write to minimize small file issues</li>
+        <li>Auto-scaling job clusters</li>
+      </ul>
+    </div>
+    <div class="layer">
+      <h4 style="color:var(--primary)">Storage Tuning</h4>
+      <ul style="margin-left:16px;margin-top:8px">
+        <li>Liquid Clustering on geo spatial join keys</li>
+        <li>ZORDER on h3_index + campaign_id</li>
+        <li>OPTIMIZE &amp; VACUUM scheduled jobs</li>
+        <li>Partition pruning on ingest_date</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Technology Stack</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Technology</th></tr></thead>
+    <tbody>
+      <tr><td>Compute</td><td>Azure Databricks (Photon clusters)</td></tr>
+      <tr><td>Storage</td><td>ADLS Gen2 + Delta Lake</td></tr>
+      <tr><td>Ingestion</td><td>Databricks AutoLoader (file notification)</td></tr>
+      <tr><td>Geospatial</td><td>Uber H3, Shapely, GeoPandas, OSMnx</td></tr>
+      <tr><td>Governance</td><td>Unity Catalog, Azure RBAC</td></tr>
+      <tr><td>Orchestration</td><td>Databricks Workflows + Control-M</td></tr>
+      <tr><td>Serving</td><td>Power BI, FastAPI, React JS</td></tr>
+      <tr><td>Alerting</td><td>SMTP, Databricks Notifications</td></tr>
+    </tbody>
+  </table>
+
+  <div class="impact-box">
+    <h3>Impact &amp; Outcomes</h3>
+    <ul style="margin-left:20px">
+      <li>Replaced a manual legacy geolocation system with a fully automated, observable pipeline</li>
+      <li>Enabled concurrent multi-campaign geo-computation with dynamic parallelism</li>
+      <li>Enforced enterprise PII compliance via Unity Catalog fine-grained permissions</li>
+      <li>End-to-end observability: Control-M scheduling, SMTP alerts, Power BI dashboards</li>
+      <li>Unlocked incremental advertising revenue through location-based advertisement campaign targeting</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
