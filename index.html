@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Engineering Portfolio | Azure Databricks & PySpark</title>
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --accent: #f97316;
+      --dark: #0f172a;
+      --card-bg: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.6; }
+    header { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); padding: 60px 20px 40px; text-align: center; border-bottom: 2px solid var(--accent); }
+    header h1 { font-size: 2.8rem; font-weight: 700; color: #fff; }
+    header h1 span { color: var(--accent); }
+    header p { font-size: 1.1rem; color: var(--muted); margin-top: 12px; max-width: 700px; margin-left: auto; margin-right: auto; }
+    .badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 24px; }
+    .badge { background: rgba(26,115,232,0.2); border: 1px solid var(--primary); color: var(--primary); padding: 5px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+    nav { background: #1e293b; padding: 14px 24px; display: flex; justify-content: center; gap: 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    nav a { color: var(--muted); text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: color 0.2s; }
+    nav a:hover { color: var(--accent); }
+    .section { padding: 60px 20px; max-width: 1200px; margin: 0 auto; }
+    .section-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+    .section-title span { color: var(--accent); }
+    .section-subtitle { color: var(--muted); margin-bottom: 40px; font-size: 0.95rem; }
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 28px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 28px; transition: transform 0.2s, border-color 0.2s; display: flex; flex-direction: column; }
+    .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+    .card-year { font-size: 0.78rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .card h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; color: #fff; }
+    .card p { color: var(--muted); font-size: 0.9rem; flex-grow: 1; margin-bottom: 18px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .tag { background: rgba(15,23,42,0.8); border: 1px solid var(--border); color: var(--muted); padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; }
+    .card-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { padding: 8px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #1557b0; }
+    .btn-outline { border: 1px solid var(--border); color: var(--muted); background: transparent; }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .skills-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 36px; margin-top: 60px; }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; margin-top: 24px; }
+    .skill-group h4 { color: var(--accent); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .skill-group ul { list-style: none; }
+    .skill-group ul li { color: var(--muted); font-size: 0.88rem; padding: 3px 0; }
+    .skill-group ul li::before { content: "▸ "; color: var(--primary); }
+    .timeline { margin-top: 24px; }
+    .tl-item { display: flex; gap: 20px; padding: 20px 0; border-left: 2px solid var(--border); margin-left: 10px; padding-left: 24px; position: relative; }
+    .tl-item::before { content: ""; position: absolute; left: -7px; top: 26px; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; }
+    .tl-date { min-width: 110px; color: var(--accent); font-size: 0.82rem; font-weight: 700; }
+    .tl-content h4 { color: #fff; font-size: 1rem; }
+    .tl-content p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+    footer { text-align: center; padding: 36px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 60px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Data Engineering <span>Portfolio</span></h1>
+  <p>Senior Data Engineer specializing in Azure Databricks, PySpark, Delta Lake, Kafka Streaming, and Cloud-Scale Data Platforms. 7+ years building production-grade pipelines for enterprise-scale workloads.</p>
+  <div class="badges">
+    <span class="badge">Azure Databricks</span>
+    <span class="badge">PySpark</span>
+    <span class="badge">Delta Lake</span>
+    <span class="badge">Apache Kafka</span>
+    <span class="badge">AutoLoader</span>
+    <span class="badge">Unity Catalog</span>
+    <span class="badge">ADLS Gen2</span>
+    <span class="badge">Spark Structured Streaming</span>
+    <span class="badge">Uber H3</span>
+    <span class="badge">Machine Learning</span>
+  </div>
+</header>
+
+<nav>
+  <a href="#projects">Projects</a>
+  <a href="#skills">Skills</a>
+  <a href="#timeline">Timeline</a>
+</nav>
+
+<!-- Projects Section -->
+<section class="section" id="projects">
+  <div class="section-title">Featured <span>Projects</span></div>
+  <div class="section-subtitle">Production-grade data engineering POCs showcasing real-world Databricks patterns</div>
+
+  <div class="projects-grid">
+
+    <!-- Project 1 -->
+    <div class="card">
+      <div class="card-year">2025 – Present</div>
+      <h3>Geo-Location Intelligence & Advertisement Campaign Platform</h3>
+      <p>Built an end-to-end geospatial analytics platform on Azure Databricks using Uber H3 hexagonal indexing, Voronoi cell-site mapping, POI enrichment, and AutoLoader mediation ingestion to enable location-based advertisement campaign analytics.</p>
+      <div class="tag-list">
+        <span class="tag">AutoLoader</span>
+        <span class="tag">Uber H3</span>
+        <span class="tag">Voronoi</span>
+        <span class="tag">SCD Type 2</span>
+        <span class="tag">Delta Lake</span>
+        <span class="tag">Unity Catalog</span>
+        <span class="tag">Photon</span>
+        <span class="tag">AQE</span>
+        <span class="tag">Liquid Clustering</span>
+      </div>
+      <div class="card-links">
+        <a class="btn btn-primary" href="project-1-geo-intelligence/architecture.html">Architecture</a>
+        <a class="btn btn-outline" href="project-1-geo-intelligence/">Code Files</a>
+      </div>
+    </div>
+
+    <!-- Project 2 -->
+    <div class="card">
+      <div class="card-year">2024 – 2025</div>
+      <h3>Real-Time Kafka Streaming Pipeline (Multiplexer Pattern)</h3>
+      <p>Designed and operated a real-time streaming pipeline using Apache Kafka and Spark Structured Streaming. Raw events land as Parquet on ADLS Gen2, stream into a centralised Multiplexer Delta table (topic | target_table | INSERT/UPDATE/DELETE), then a cost-optimised scheduled batch routes records to SCD Type 1 or SCD Type 2 downstream tables based on a metadata routing config.</p>
+      <div class="tag-list">
+        <span class="tag">Apache Kafka</span>
+        <span class="tag">Spark Structured Streaming</span>
+        <span class="tag">Delta Lake</span>
+        <span class="tag">SCD Type 1 & 2</span>
+        <span class="tag">Schema Evolution</span>
+        <span class="tag">Data Quality</span>
+        <span class="tag">ADLS Gen2</span>
+      </div>
+      <div class="card-links">
+        <a class="btn btn-primary" href="project-2-kafka-streaming/architecture.html">Architecture</a>
+        <a class="btn btn-outline" href="project-2-kafka-streaming/">Code Files</a>
+      </div>
+    </div>
+
+    <!-- Project 3 -->
+    <div class="card">
+      <div class="card-year">2022 – 2023</div>
+      <h3>AutoLoader File-Notification Multiplexer Pipeline</h3>
+      <p>Engineered a metadata-driven AutoLoader pipeline where files landing on ADLS Gen2 trigger Azure Event Grid notifications queued to Azure Queue Storage. AutoLoader (cloudFiles, file-notification mode) streams records into a centralised Multiplexer Delta table. Dedicated streaming jobs per dataset then apply SCD Type 1 or SCD Type 2 to downstream Silver tables in near-real-time.</p>
+      <div class="tag-list">
+        <span class="tag">AutoLoader File-Notification</span>
+        <span class="tag">Metadata-Driven</span>
+        <span class="tag">Delta Tracking Tables</span>
+        <span class="tag">Schema Evolution</span>
+        <span class="tag">SCD1 / SCD2</span>
+        <span class="tag">Databricks Workflows</span>
+      </div>
+      <div class="card-links">
+        <a class="btn btn-primary" href="project-3-autoloader-framework/architecture.html">Architecture</a>
+        <a class="btn btn-outline" href="project-3-autoloader-framework/">Code Files</a>
+      </div>
+    </div>
+
+    <!-- Project 4 -->
+    <div class="card">
+      <div class="card-year">2021 – 2022</div>
+      <h3>Enterprise Multi-Source ETL Pipeline Platform</h3>
+      <p>Delivered end-to-end extraction and transformation of transactional data from multiple enterprise source systems (SFTP, SharePoint, APIs) into ADLS Gen2 curated Delta tables, with PGP encryption, ADF orchestration, and operational dashboards.</p>
+      <div class="tag-list">
+        <span class="tag">Azure Data Factory</span>
+        <span class="tag">Databricks Workflows</span>
+        <span class="tag">SFTP + PGP</span>
+        <span class="tag">Delta Tables</span>
+        <span class="tag">ADLS Gen2</span>
+        <span class="tag">Power BI</span>
+      </div>
+      <div class="card-links">
+        <a class="btn btn-primary" href="project-4-enterprise-etl/architecture.html">Architecture</a>
+        <a class="btn btn-outline" href="project-4-enterprise-etl/">Code Files</a>
+      </div>
+    </div>
+
+    <!-- Project 5 -->
+    <div class="card">
+      <div class="card-year">2019 – 2021</div>
+      <h3>OPEX Analytics, Geospatial Dashboards &amp; Contract Cost Analysis</h3>
+      <p>Ingested and analyzed infrastructure OPEX datasets on Azure Databricks, applied business rules for cost attribution, built geospatial Power BI dashboards using Uber H3 indexing, and built a metadata-driven PDF extraction framework to create a structured invoicing dataset — then joined it with the power supply asset register to compare theoretical contract costs against actual invoiced amounts and identify contracts for recalculation.</p>
+      <div class="tag-list">
+        <span class="tag">Azure Databricks</span>
+        <span class="tag">Uber H3</span>
+        <span class="tag">PDF Regex Extraction</span>
+        <span class="tag">Contract Cost Analysis</span>
+        <span class="tag">PySpark</span>
+        <span class="tag">Power BI</span>
+        <span class="tag">Cost Attribution</span>
+      </div>
+      <div class="card-links">
+        <a class="btn btn-primary" href="project-5-opex-analytics-ml/architecture.html">Architecture</a>
+        <a class="btn btn-outline" href="project-5-opex-analytics-ml/">Code Files</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Skills Section -->
+<section class="section" id="skills">
+  <div class="section-title">Technical <span>Skills</span></div>
+  <div class="section-subtitle">Core competencies across the modern data engineering stack</div>
+  <div class="skills-section">
+    <div class="skills-grid">
+      <div class="skill-group">
+        <h4>Cloud & Storage</h4>
+        <ul>
+          <li>Azure Databricks</li>
+          <li>ADLS Gen2</li>
+          <li>Azure Data Factory</li>
+          <li>Azure Event Hubs</li>
+          <li>Azure Key Vault</li>
+          <li>Unity Catalog</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>Streaming & Ingestion</h4>
+        <ul>
+          <li>Apache Kafka</li>
+          <li>Spark Structured Streaming</li>
+          <li>Databricks AutoLoader</li>
+          <li>File Notification Mode</li>
+          <li>Checkpointing</li>
+          <li>Schema Evolution</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>Data Lake & Delta</h4>
+        <ul>
+          <li>Delta Lake</li>
+          <li>Medallion Architecture</li>
+          <li>SCD Type 1 & 2</li>
+          <li>Liquid Clustering</li>
+          <li>Z-Ordering</li>
+          <li>Delta Time Travel</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>Languages & Frameworks</h4>
+        <ul>
+          <li>PySpark</li>
+          <li>Python</li>
+          <li>SQL / SparkSQL</li>
+          <li>FastAPI</li>
+          <li>React JS</li>
+          <li>Pandas / NumPy</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>Geospatial</h4>
+        <ul>
+          <li>Uber H3 Indexing</li>
+          <li>Voronoi Diagrams</li>
+          <li>POI Enrichment</li>
+          <li>OpenStreetMap</li>
+          <li>Geospatial Joins</li>
+          <li>Spatial Analytics</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>ML & Analytics</h4>
+        <ul>
+          <li>Scikit-learn / MLlib</li>
+          <li>Contract Cost Analysis</li>
+          <li>PDF Regex Extraction</li>
+          <li>Feature Engineering</li>
+          <li>Power BI</li>
+          <li>Data Quality Rules</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>Performance & Ops</h4>
+        <ul>
+          <li>Adaptive Query Execution</li>
+          <li>Photon Engine</li>
+          <li>Spark Tuning</li>
+          <li>Databricks Workflows</li>
+          <li>Job Orchestration</li>
+          <li>SMTP Alerting</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>Governance & Security</h4>
+        <ul>
+          <li>Unity Catalog RBAC</li>
+          <li>ADLS Gen2 Encryption</li>
+          <li>PGP Encryption</li>
+          <li>Data Lineage</li>
+          <li>PII Compliance</li>
+          <li>Column-Level Security</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Timeline Section -->
+<section class="section" id="timeline">
+  <div class="section-title">Project <span>Timeline</span></div>
+  <div class="section-subtitle">Career progression and key deliverables</div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-date">2025 – Now</div>
+      <div class="tl-content">
+        <h4>Senior Data Engineer — Geo Intelligence Platform</h4>
+        <p>AutoLoader mediation ingestion, Uber H3 geospatial processing, SCD2, Photon/AQE optimization, Unity Catalog governance</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2024 – 2025</div>
+      <div class="tl-content">
+        <h4>Senior Data Engineer — Real-Time Kafka Streaming</h4>
+        <p>Kafka + Spark Structured Streaming, Bronze/Silver/Gold medallion, metadata-driven reusable framework</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2022 – 2023</div>
+      <div class="tl-content">
+        <h4>Data Engineer — AutoLoader Metadata Framework</h4>
+        <p>File-notification AutoLoader, Delta tracking tables, schema evolution, 70%+ compute cost reduction</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2021 – 2022</div>
+      <div class="tl-content">
+        <h4>Data Engineer — Enterprise ETL Platform</h4>
+        <p>ADF + Databricks, SFTP/PGP ingestion, transactional data curated Delta tables, real-time operational reporting</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">2019 – 2021</div>
+      <div class="tl-content">
+        <h4>Data Engineer — OPEX Analytics &amp; Contract Cost Analysis</h4>
+        <p>OPEX cost attribution, Uber H3 dashboards, metadata-driven PDF extraction, invoicing dataset, contract cost recalculation</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Data Engineering Portfolio &bull; Built with Azure Databricks, PySpark &amp; Delta Lake &bull; 2019–2025</p>
+</footer>
+
+</body>
+</html>

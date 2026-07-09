@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project 3 – AutoLoader Metadata Framework | Architecture</title>
+  <style>
+    :root { --primary: #1a73e8; --accent: #f97316; --dark: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+    header { background: linear-gradient(135deg, #0f172a, #1b2c4a); padding: 40px 24px; border-bottom: 2px solid var(--accent); }
+    header h1 { font-size: 2rem; font-weight: 700; } header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 8px; }
+    .back { display: inline-block; margin: 20px 24px; color: var(--primary); text-decoration: none; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+    h2 { font-size: 1.4rem; margin: 40px 0 16px; color: #fff; border-left: 4px solid var(--accent); padding-left: 12px; }
+    p, li { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+    ul { margin-left: 20px; margin-bottom: 12px; }
+    .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 24px 0; }
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 10px 0; }
+    .box { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; text-align: center; }
+    .box.src { border-color: #7c3aed; color: #a78bfa; }
+    .box.al { border-color: var(--primary); color: #60a5fa; }
+    .box.meta { border-color: #10b981; color: #6ee7b7; }
+    .box.bronze { border-color: #cd7f32; color: #cd7f32; }
+    .box.silver { border-color: #9ca3af; color: #e5e7eb; }
+    .box.mux { border-color: #8b5cf6; color: #c4b5fd; }
+    .box.queue { border-color: #0ea5e9; color: #38bdf8; }
+    .arrow { color: var(--muted); padding: 0 8px; font-size: 1.1rem; }
+    .layer { background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 12px 0; }
+    .layer h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 0.78rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.87rem; }
+    th { background: #0f172a; padding: 10px 14px; text-align: left; color: var(--accent); border-bottom: 1px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .code-block { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: 'Consolas', monospace; font-size: 0.82rem; color: #7dd3fc; margin: 12px 0; overflow-x: auto; white-space: pre; }
+    .impact-box { background: rgba(249,115,22,0.08); border: 1px solid var(--accent); border-radius: 10px; padding: 20px 24px; margin-top: 32px; }
+    .impact-box h3 { color: var(--accent); margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>AutoLoader <span>File-Notification Multiplexer Pipeline</span></h1>
+  <p>Files land on ADLS Gen2; Azure Event Grid fires file notifications to Azure Queue Storage. AutoLoader (<code>cloudFiles</code>, <code>useNotifications=true</code>) picks up new files without directory listing and streams records into a centralised Multiplexer Delta table. Dedicated streaming jobs then apply SCD Type 1 or SCD Type 2 to downstream tables — all driven by a single metadata config.</p>
+</header>
+<a class="back" href="../index.html">← Back to Portfolio</a>
+<div class="container">
+
+  <h2>Solution Overview</h2>
+  <p>This pipeline ingests files from multiple ADLS Gen2 landing zones using <strong>AutoLoader file-notification mode</strong>: Azure Event Grid subscribes to blob-created events and routes them to an Azure Queue Storage. AutoLoader polls the queue to discover new files instantly — no costly directory listing. Each file’s records are enriched with <code>dataset_id</code>, <code>target_table</code>, and CDC <code>operation</code> type (from config or payload), then streamed into a single centralised <strong>Multiplexer Delta table</strong>. A separate streaming job per dataset reads from the Multiplexer via <code>readStream</code> and applies SCD Type 1 (latest-wins MERGE) or SCD Type 2 (expire + insert with <code>eff_from</code> / <code>eff_to</code>) to the downstream Silver table — enabling near-real-time propagation without scheduled batch jobs.</p>
+
+  <h2>Architecture</h2>
+  <div class="arch-diagram">
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">Stage 1 — File Notification: ADLS Gen2 → Event Grid → Queue → AutoLoader</p>
+    <div class="flow">
+      <div class="box src">Source Files<br/>(ADLS Gen2)</div>
+      <div class="arrow">→</div>
+      <div class="box queue">Azure Event Grid<br/>(blob-created event)</div>
+      <div class="arrow">→</div>
+      <div class="box queue">Azure Queue<br/>Storage</div>
+      <div class="arrow">→</div>
+      <div class="box al">AutoLoader<br/>(cloudFiles,<br/>useNotifications=true)</div>
+    </div>
+    <p style="font-size:0.8rem;color:var(--muted);margin:16px 0 8px">Stage 2 — Streaming Ingest: AutoLoader → Multiplexer Delta Table</p>
+    <div class="flow">
+      <div class="box al">AutoLoader<br/>Stream</div>
+      <div class="arrow">→</div>
+      <div class="box meta">Schema Evolution<br/>+ File Tracking</div>
+      <div class="arrow">→</div>
+      <div class="box mux">Multiplexer Delta Table<br/><span style="font-weight:400;font-size:0.75rem">dataset_id | target_table | operation | payload</span></div>
+    </div>
+    <p style="font-size:0.8rem;color:var(--muted);margin:16px 0 8px">Stage 3 — Streaming Downstream: Multiplexer → SCD1 / SCD2 (per-dataset streaming jobs)</p>
+    <div class="flow">
+      <div class="box mux">Multiplexer<br/>Delta Table</div>
+      <div class="arrow">→</div>
+      <div class="box al">readStream<br/>per dataset_id</div>
+      <div class="arrow">→</div>
+      <div class="box silver">SCD Type 1<br/>Silver Tables</div>
+      <div class="arrow" style="padding:0 4px;font-size:0.9rem">or</div>
+      <div class="box silver">SCD Type 2<br/>Silver Tables</div>
+    </div>
+  </div>
+
+  <h2>Configuration-Driven Design</h2>
+  <p>One row in <code>dataset_config</code> = one file-based dataset. Adding a new landing zone requires only an INSERT — no new notebooks or streaming jobs are deployed:</p>
+  <div class="code-block">catalog.control.dataset_config — one row per dataset:
+┌────────────┬─────────────────────────────┬───────────────────────┬────────┬────────┬──────────┐
+│ dataset_id │ source_path                  │ target_table           │ file_fmt │ scd_type │ is_active│
+├────────────┼─────────────────────────────┼───────────────────────┼────────┼────────┼──────────┤
+│ orders     │ abfss://.../raw/orders/      │ silver.orders          │ json     │ SCD1     │ true     │
+│ customers  │ abfss://.../raw/customers/   │ silver.customers       │ csv      │ SCD2     │ true     │
+│ inventory  │ abfss://.../raw/inventory/   │ silver.inventory       │ parquet  │ SCD1     │ true     │
+└────────────┴─────────────────────────────┴───────────────────────┴────────┴────────┴──────────┘</div>
+
+  <h2>Pipeline Stage Details</h2>
+  <div class="layer" style="border-color:var(--primary)">
+    <h4 style="color:#60a5fa">Stage 1 — AutoLoader File-Notification (Event Grid + Queue Storage)</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Azure Event Grid subscribes to ADLS Gen2 blob-created events and routes each notification to Azure Queue Storage. AutoLoader (<code>cloudFiles.useNotifications=true</code>) polls the queue to discover and ingest new files — eliminating directory listing and scaling to millions of files without performance degradation.</p>
+    <div class="chips">
+      <span class="chip">cloudFiles.useNotifications=true</span>
+      <span class="chip">Azure Event Grid (blob-created)</span>
+      <span class="chip">Azure Queue Storage (event queue)</span>
+      <span class="chip">No directory listing overhead</span>
+      <span class="chip">Schema inference + evolution</span>
+      <span class="chip">Checkpoint per dataset</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#8b5cf6">
+    <h4 style="color:#c4b5fd">Stage 2 — Multiplexer Delta Table (Central Routing Hub)</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">All file-based datasets are streamed into a single Multiplexer Delta table. Each record is enriched with: <strong style="color:#c4b5fd">dataset_id</strong>, <strong style="color:#c4b5fd">target_table</strong> (resolved from config), <strong style="color:#c4b5fd">operation</strong> (INSERT/UPDATE/DELETE from payload field or default INSERT), and the full source file path. Enables a single AutoLoader engine to serve all datasets.</p>
+    <div class="chips">
+      <span class="chip">dataset_id column</span>
+      <span class="chip">target_table column</span>
+      <span class="chip">operation: INSERT / UPDATE / DELETE</span>
+      <span class="chip">source_file path</span>
+      <span class="chip">row_hash (MD5 change detection)</span>
+      <span class="chip">Partitioned by ingest_date / dataset_id</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#10b981">
+    <h4 style="color:#6ee7b7">File Tracking Delta Table</h4>
+    <div class="chips">
+      <span class="chip">file_path, file_size, status</span>
+      <span class="chip">PENDING / PROCESSING / DONE / FAILED</span>
+      <span class="chip">Retry count tracking</span>
+      <span class="chip">Drives recovery &amp; reprocessing</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#d97706">
+    <h4 style="color:#fbbf24">Schema Evolution Handler</h4>
+    <div class="chips">
+      <span class="chip">addNewColumns mode</span>
+      <span class="chip">mergeSchema on Multiplexer write</span>
+      <span class="chip">Type inference overrides</span>
+      <span class="chip">Schema version audit logging</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:var(--accent)">
+    <h4 style="color:var(--accent)">Stage 3 — Streaming Downstream Jobs (SCD1 / SCD2 per dataset)</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">One streaming job per active dataset reads from the Multiplexer table via <code>readStream.format("delta")</code> filtered on <code>dataset_id</code>. Each micro-batch applies SCD Type 1 (latest-wins MERGE) or SCD Type 2 (expire + insert with <code>eff_from</code> / <code>eff_to</code>) to the downstream Silver table via <code>foreachBatch</code>, with DELETE operations handled as hard-deletes (SCD1) or soft-closes (SCD2).</p>
+    <div class="chips">
+      <span class="chip">readStream from Multiplexer</span>
+      <span class="chip">Filtered by dataset_id</span>
+      <span class="chip">foreachBatch SCD merge</span>
+      <span class="chip">SCD1: latest-wins MERGE</span>
+      <span class="chip">SCD2: eff_from / eff_to / crnt_flag</span>
+      <span class="chip">DELETE: hard-delete (SCD1) / soft-close (SCD2)</span>
+      <span class="chip">Independent checkpoint per dataset</span>
+    </div>
+  </div>
+
+  <h2>Technology Stack</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Technology</th></tr></thead>
+    <tbody>
+      <tr><td>File Notification</td><td>Azure Event Grid (blob-created) + Azure Queue Storage</td></tr>
+      <tr><td>Ingestion</td><td>Databricks AutoLoader (cloudFiles, useNotifications=true)</td></tr>
+      <tr><td>Routing Hub</td><td>Multiplexer Delta Table (dataset_id | target_table | operation)</td></tr>
+      <tr><td>Downstream Processing</td><td>Spark Structured Streaming + foreachBatch (SCD1 &amp; SCD2)</td></tr>
+      <tr><td>Configuration</td><td>Metadata-driven dataset_config Delta table</td></tr>
+      <tr><td>Orchestration</td><td>Databricks Workflows (always-on streaming clusters)</td></tr>
+      <tr><td>Governance</td><td>Unity Catalog</td></tr>
+    </tbody>
+  </table>
+
+  <div class="impact-box">
+    <h3>Impact &amp; Outcomes</h3>
+    <ul style="margin-left:20px">
+      <li>Event Grid file-notification eliminates directory listing — near-instant file detection at any landing scale</li>
+      <li>Multiplexer pattern routes all file-based datasets through one AutoLoader engine — no per-dataset notebooks</li>
+      <li>Streaming downstream jobs propagate changes in near-real-time without scheduled batch overhead</li>
+      <li>SCD type (1 or 2) is business-requirement driven per dataset — configured in metadata, not hardcoded</li>
+      <li>Schema evolution handler prevents pipeline failures from upstream schema changes</li>
+      <li>File tracking table enables reliable recovery and audit for every ingested file</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

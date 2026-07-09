@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project 5 – OPEX Analytics | Architecture</title>
+  <style>
+    :root { --primary: #1a73e8; --accent: #f97316; --dark: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+    header { background: linear-gradient(135deg, #0f172a, #1e2a1a); padding: 40px 24px; border-bottom: 2px solid var(--accent); }
+    header h1 { font-size: 2rem; font-weight: 700; } header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 8px; }
+    .back { display: inline-block; margin: 20px 24px; color: var(--primary); text-decoration: none; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+    h2 { font-size: 1.4rem; margin: 40px 0 16px; color: #fff; border-left: 4px solid var(--accent); padding-left: 12px; }
+    p, li { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+    ul { margin-left: 20px; margin-bottom: 12px; }
+    .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 24px 0; }
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .box { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; font-weight: 600; text-align: center; }
+    .box.src { border-color: #7c3aed; color: #a78bfa; }
+    .box.ingest { border-color: var(--primary); color: #60a5fa; }
+    .box.proc { border-color: #10b981; color: #6ee7b7; }
+    .box.ml { border-color: #ec4899; color: #f9a8d4; }
+    .box.contract { border-color: #f59e0b; color: #fcd34d; }
+    .box.bi { border-color: var(--accent); color: var(--accent); }
+    .arrow { color: var(--muted); padding: 0 4px; font-size: 1.1rem; }
+    .layer { background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 12px 0; }
+    .layer h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 0.78rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.87rem; }
+    th { background: #0f172a; padding: 10px 14px; text-align: left; color: var(--accent); border-bottom: 1px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .impact-box { background: rgba(249,115,22,0.08); border: 1px solid var(--accent); border-radius: 10px; padding: 20px 24px; margin-top: 32px; }
+    .impact-box h3 { color: var(--accent); margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>OPEX Analytics, <span>Geospatial Dashboards &amp; Contract Cost Analysis</span></h1>
+  <p>Ingestion and analysis of infrastructure OPEX datasets on Azure Databricks, Uber H3 geospatial dashboards, and a metadata-driven PDF extraction framework that creates a structured invoicing dataset from supplier invoices — then joins it with the power supply asset register to compare theoretical contract costs against actual billed amounts and identify contracts for recalculation.</p>
+</header>
+<a class="back" href="../index.html">← Back to Portfolio</a>
+<div class="container">
+
+  <h2>Solution Overview</h2>
+  <p>This platform centralized fragmented operational expenditure data from multiple infrastructure asset categories (power supplies, poles, underground cables, right-of-way) into Azure Databricks. Business rules attributed costs to the correct cost centres. A <strong>metadata-driven PDF extraction framework</strong> — where each supplier and invoice type is registered as a configuration row — drove structured extraction from supplier invoices, creating a normalised <strong>invoicing dataset</strong>. This invoicing dataset was then joined with the infrastructure power supply asset register, which holds the theoretical (contractual) cost per asset and billing period. By comparing the theoretical cost against the actual invoiced amount, the platform identified billing variances and flagged contracts where recalculation or renegotiation was warranted. Interactive Power BI dashboards with Uber H3 geospatial mapping provided nationwide cost visibility.</p>
+
+  <h2>Architecture</h2>
+  <div class="arch-diagram">
+    <div class="flow">
+      <div class="box src">OPEX Datasets<br/>(Excel/CSV/PDF)</div>
+      <div class="arrow">→</div>
+      <div class="box ingest">Azure Databricks<br/>PySpark Ingest</div>
+      <div class="arrow">→</div>
+      <div class="box proc">Business Rules<br/>Cost Attribution</div>
+      <div class="arrow">→</div>
+      <div class="box proc">H3 Geospatial<br/>Indexing</div>
+    </div>
+    <div class="flow" style="margin-top:12px">
+      <div class="box src">Supplier PDFs<br/>(Invoices)</div>
+      <div class="arrow">→</div>
+      <div class="box ml">Metadata-Driven<br/>PDF Regex Extraction</div>
+      <div class="arrow">→</div>
+      <div class="box ingest">Invoicing<br/>Dataset</div>
+      <div class="arrow">→</div>
+      <div class="box contract">Contract<br/>Cost Analysis</div>
+      <div class="arrow">→</div>
+      <div class="box bi">Power BI<br/>Dashboards</div>
+    </div>
+  </div>
+
+  <h2>Key Components</h2>
+  <div class="layer" style="border-color:var(--primary)">
+    <h4 style="color:#60a5fa">OPEX Data Ingestion &amp; Business Rules</h4>
+    <div class="chips">
+      <span class="chip">PySpark batch ingestion</span>
+      <span class="chip">Asset categorisation rules</span>
+      <span class="chip">Cost centre attribution logic</span>
+      <span class="chip">Multi-source joins (billing, asset register)</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#10b981">
+    <h4 style="color:#6ee7b7">Uber H3 Geospatial Analytics</h4>
+    <div class="chips">
+      <span class="chip">H3 Resolution 7–9 for national coverage</span>
+      <span class="chip">Cost density heatmaps</span>
+      <span class="chip">Asset-level location tagging</span>
+      <span class="chip">Power BI map integration</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#ec4899">
+    <h4 style="color:#f9a8d4">PDF Regex Field Extraction</h4>
+    <div class="chips">
+      <span class="chip">pdfplumber text extraction</span>
+      <span class="chip">Regex patterns per field</span>
+      <span class="chip">Structured output to Delta table</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#ec4899">
+    <h4 style="color:#f9a8d4">Metadata-Driven PDF Extraction Framework</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Each supplier and invoice type is registered as a row in the <code>pdf_extraction_config</code> Delta table (regex field patterns, filename routing pattern). The framework reads active configs, uses pdfplumber to extract raw text from each PDF, applies supplier-specific regex patterns to parse structured fields, normalises extracted values, and writes a unified <strong style="color:#f9a8d4">invoicing dataset</strong> to a Silver Delta table.</p>
+    <div class="chips">
+      <span class="chip">pdf_extraction_config Delta table</span>
+      <span class="chip">pdfplumber text extraction</span>
+      <span class="chip">Per-supplier regex field patterns</span>
+      <span class="chip">Filename pattern routing</span>
+      <span class="chip">Normalised invoicing_dataset output</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#f59e0b">
+    <h4 style="color:#fcd34d">Contract Cost Analysis — Theoretical vs Actual</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">The invoicing dataset (actual billed amounts) is joined against the infrastructure power supply asset register (theoretical contract cost per asset and billing period). Variance and variance percentage are computed per contract line. Records where actual cost exceeds theoretical by more than the configured threshold are flagged as <code>RECALCULATE</code> — providing evidence for supplier renegotiation.</p>
+    <div class="chips">
+      <span class="chip">Join: invoicing_dataset × infra_power_supply_assets</span>
+      <span class="chip">theoretical_cost vs actual_invoiced_cost</span>
+      <span class="chip">cost_variance &amp; variance_pct computed</span>
+      <span class="chip">RECALCULATE / WITHIN_TOLERANCE / UNDERBILLED flags</span>
+      <span class="chip">Partitioned output to contract_cost_analysis</span>
+    </div>
+  </div>
+
+  <h2>Technology Stack</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Technology</th></tr></thead>
+    <tbody>
+      <tr><td>Compute</td><td>Azure Databricks</td></tr>
+      <tr><td>Processing</td><td>PySpark, Pandas, NumPy</td></tr>
+      <tr><td>Geospatial</td><td>Uber H3, GeoPandas, Shapely</td></tr>
+      <tr><td>Document AI</td><td>PyMuPDF, pdfplumber, Tesseract OCR</td></tr>
+      <tr><td>PDF Config</td><td>Metadata-driven pdf_extraction_config Delta table</td></tr>
+      <tr><td>Contract Analysis</td><td>PySpark joins (invoicing dataset × infra asset register), variance computation</td></tr>
+      <tr><td>Visualisation</td><td>Power BI with H3 map visuals</td></tr>
+      <tr><td>Storage</td><td>ADLS Gen2 + Delta Lake</td></tr>
+    </tbody>
+  </table>
+
+  <div class="impact-box">
+    <h3>Impact &amp; Outcomes</h3>
+    <ul style="margin-left:20px">
+      <li>Metadata-driven PDF framework enabled structured invoicing datasets from all supplier invoice types without per-supplier code changes</li>
+      <li>Contract cost analysis identified billing variances per asset and billing period, providing direct evidence for contract recalculation</li>
+      <li>OCR automation replaced manual invoice data entry across hundreds of supplier PDFs</li>
+      <li>Geospatial dashboards provided nationwide infrastructure cost visibility by H3 region</li>
+      <li>Enabled targeted supplier renegotiations backed by data-driven variance evidence</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

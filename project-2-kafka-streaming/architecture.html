@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project 2 – Real-Time Kafka Streaming Pipeline | Architecture</title>
+  <style>
+    :root { --primary: #1a73e8; --accent: #f97316; --dark: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+    header { background: linear-gradient(135deg, #0f172a, #1a3520); padding: 40px 24px; border-bottom: 2px solid var(--accent); }
+    header h1 { font-size: 2rem; font-weight: 700; } header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 8px; max-width: 800px; }
+    .back { display: inline-block; margin: 20px 24px; color: var(--primary); text-decoration: none; font-size: 0.9rem; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+    h2 { font-size: 1.4rem; margin: 40px 0 16px; color: #fff; border-left: 4px solid var(--accent); padding-left: 12px; }
+    p, li { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+    ul { margin-left: 20px; margin-bottom: 12px; }
+    .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 24px 0; }
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 10px 0; }
+    .box { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; text-align: center; }
+    .box.kafka { border-color: #7c3aed; color: #a78bfa; }
+    .box.spark { border-color: var(--primary); color: #60a5fa; }
+    .box.bronze { border-color: #cd7f32; color: #cd7f32; }
+    .box.silver { border-color: #9ca3af; color: #e5e7eb; }
+    .box.gold { border-color: #d97706; color: #fbbf24; }
+    .box.serve { border-color: var(--accent); color: var(--accent); }
+    .box.parquet { border-color: #0ea5e9; color: #38bdf8; }
+    .box.mux { border-color: #8b5cf6; color: #c4b5fd; }
+    .arrow { color: var(--muted); padding: 0 8px; font-size: 1.1rem; }
+    .layer { background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 12px 0; }
+    .layer h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 0.78rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.87rem; }
+    th { background: #0f172a; padding: 10px 14px; text-align: left; color: var(--accent); border-bottom: 1px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .code-block { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: 'Consolas', monospace; font-size: 0.82rem; color: #7dd3fc; margin: 12px 0; overflow-x: auto; white-space: pre; }
+    .impact-box { background: rgba(249,115,22,0.08); border: 1px solid var(--accent); border-radius: 10px; padding: 20px 24px; margin-top: 32px; }
+    .impact-box h3 { color: var(--accent); margin-bottom: 10px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Real-Time <span>Kafka Streaming Pipeline</span> (Multiplexer Pattern)</h1>
+  <p>Production pipeline where Databricks consumes multiple Kafka topics and lands raw events as Parquet on ADLS Gen2. A streaming Multiplexer Delta table centralises CDC routing (INSERT / UPDATE / DELETE per target table), then a cost-optimised scheduled batch populates SCD Type 1 and SCD Type 2 downstream tables based on business requirement.</p>
+</header>
+<a class="back" href="../index.html">← Back to Portfolio</a>
+
+<div class="container">
+
+  <h2>Solution Overview</h2>
+  <p>This pipeline consumes events from multiple Apache Kafka topics via Spark Structured Streaming and lands them as raw Parquet files on ADLS Gen2 — decoupling high-throughput ingestion from transformation overhead. An AutoLoader streaming job then reads these files into a single centralised <strong>Multiplexer Delta table</strong>, which records the source Kafka topic, target downstream table name, and CDC operation type (INSERT / UPDATE / DELETE) for every message. A metadata-driven routing job runs on a <strong>fixed schedule</strong> to read unprocessed Multiplexer records and apply either SCD Type 1 or SCD Type 2 MERGE into the appropriate downstream table as defined in the topic routing config — decoupling streaming ingestion from batch transformation to control compute cost.</p>
+
+  <h2>High-Level Architecture</h2>
+  <div class="arch-diagram">
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px">Stage 1 — Streaming Ingest: Kafka → Parquet Landing</p>
+    <div class="flow">
+      <div class="box kafka">Source Systems<br/>(APIs, DBs, Files)</div>
+      <div class="arrow">→</div>
+      <div class="box kafka">Apache Kafka<br/>Topics</div>
+      <div class="arrow">→</div>
+      <div class="box spark">Spark Structured<br/>Streaming</div>
+      <div class="arrow">→</div>
+      <div class="box parquet">ADLS Gen2<br/>Parquet Landing<br/>(partitioned by topic)</div>
+    </div>
+    <p style="font-size:0.8rem;color:var(--muted);margin:16px 0 8px">Stage 2 — Streaming Load: Parquet → Multiplexer Delta Table</p>
+    <div class="flow">
+      <div class="box parquet">Parquet Files<br/>(ADLS Gen2)</div>
+      <div class="arrow">→</div>
+      <div class="box spark">AutoLoader<br/>Stream Read</div>
+      <div class="arrow">→</div>
+      <div class="box mux">Multiplexer Delta Table<br/><span style="font-weight:400;font-size:0.75rem">topic | target_table | I/U/D | payload</span></div>
+    </div>
+    <p style="font-size:0.8rem;color:var(--muted);margin:16px 0 8px">Stage 3 — Scheduled Batch: Multiplexer → Downstream Tables (fixed schedule)</p>
+    <div class="flow">
+      <div class="box mux">Multiplexer<br/>Delta Table</div>
+      <div class="arrow">→</div>
+      <div class="box spark">Routing Job<br/>(fixed schedule)</div>
+      <div class="arrow">→</div>
+      <div class="box silver">SCD Type 1<br/>Downstream Tables</div>
+      <div class="arrow" style="padding:0 4px;font-size:0.9rem">or</div>
+      <div class="box gold">SCD Type 2<br/>Downstream Tables</div>
+      <div class="arrow">→</div>
+      <div class="box serve">BI / APIs<br/>Downstream</div>
+    </div>
+  </div>
+
+  <h2>Pipeline Stage Details</h2>
+  <div class="layer" style="border-color:#0ea5e9">
+    <h4 style="color:#38bdf8">Stage 1 — Raw Parquet Landing (ADLS Gen2)</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Databricks Structured Streaming consumes from Kafka and writes raw events to ADLS Gen2 as Parquet files, partitioned by topic and ingest date. No Delta transformation overhead at this stage — optimised purely for throughput.</p>
+    <div class="chips">
+      <span class="chip">format("parquet")</span>
+      <span class="chip">Partitioned by topic / ingest_date</span>
+      <span class="chip">Kafka metadata preserved</span>
+      <span class="chip">Checkpoint per topic</span>
+      <span class="chip">maxOffsetsPerTrigger throttle</span>
+      <span class="chip">Dead-letter quarantine</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#8b5cf6">
+    <h4 style="color:#c4b5fd">Stage 2 — Multiplexer Delta Table (Streaming Load)</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">AutoLoader streams from the Parquet landing zone into a single centralised Multiplexer Delta table. Each record is enriched with: <strong style="color:#c4b5fd">source Kafka topic</strong>, <strong style="color:#c4b5fd">target downstream table</strong> (from routing config), and <strong style="color:#c4b5fd">CDC operation type</strong> (INSERT / UPDATE / DELETE extracted from payload). Acts as a universal message router for all topics.</p>
+    <div class="chips">
+      <span class="chip">AutoLoader cloudFiles</span>
+      <span class="chip">kafka_topic column</span>
+      <span class="chip">target_table column</span>
+      <span class="chip">operation: I / U / D</span>
+      <span class="chip">business_key (JSON)</span>
+      <span class="chip">processed_flag for routing</span>
+      <span class="chip">Append-only streaming</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#9ca3af">
+    <h4 style="color:#e5e7eb">Stage 3 — Downstream Tables (Scheduled Batch)</h4>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">A routing job runs on a <strong style="color:#e5e7eb">fixed schedule</strong> (to control compute cost) and reads unprocessed Multiplexer records. For each <code>target_table</code>, it looks up the <code>scd_type</code> from the routing config and applies either SCD Type 1 (latest wins) or SCD Type 2 (full history with eff_from / eff_to) MERGE INTO the downstream Delta table.</p>
+    <div class="chips">
+      <span class="chip">SCD Type 1 — latest-wins MERGE</span>
+      <span class="chip">SCD Type 2 — eff_from / eff_to / crnt_flag</span>
+      <span class="chip">Routing driven by scd_type config</span>
+      <span class="chip">Fixed schedule (cost optimised)</span>
+      <span class="chip">processed_flag updated post-merge</span>
+      <span class="chip">MD5 row hash change detection</span>
+    </div>
+  </div>
+
+  <h2>Metadata-Driven Routing Framework</h2>
+  <p>A single <code>topic_routing</code> config Delta table drives the entire pipeline. Adding a new Kafka topic requires only a row insert — no code deployment. The <code>scd_type</code> column determines whether the downstream table uses SCD1 (latest-wins) or SCD2 (full audit history):</p>
+  <div class="code-block">catalog.config.topic_routing:
+┌─────────────────┬──────────────────────────┬────────┬──────────────────┬──────────┐
+│ kafka_topic     │ target_table             │ scd_type │ business_key_cols  │ is_active│
+├─────────────────┼──────────────────────────┼────────┼──────────────────┼──────────┤
+│ events.orders   │ silver.orders            │ SCD1     │ order_id           │ true     │
+│ events.payments │ silver.payments          │ SCD2     │ payment_id         │ true     │
+│ events.accounts │ silver.dim_accounts      │ SCD2     │ account_id         │ true     │
+│ events.products │ silver.dim_products      │ SCD1     │ product_id         │ true     │
+└─────────────────┴──────────────────────────┴────────┴──────────────────┴──────────┘</div>
+
+  <h2>Data Quality Framework</h2>
+  <div class="grid2">
+    <div class="layer">
+      <h4 style="color:var(--primary)">Validation Rules</h4>
+      <ul style="margin-left:16px;margin-top:8px">
+        <li>Non-null business key enforcement</li>
+        <li>Referential integrity checks</li>
+        <li>Range / boundary validation</li>
+        <li>Regex pattern matching</li>
+        <li>Duplicate detection</li>
+      </ul>
+    </div>
+    <div class="layer">
+      <h4 style="color:var(--primary)">Monitoring &amp; Alerting</h4>
+      <ul style="margin-left:16px;margin-top:8px">
+        <li>DQ score per batch written to metrics table</li>
+        <li>Threshold alerts via SMTP</li>
+        <li>Rejected records quarantined to dead-letter table</li>
+        <li>Control-M job status integration</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Technology Stack</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Technology</th></tr></thead>
+    <tbody>
+      <tr><td>Streaming Broker</td><td>Apache Kafka (managed / Azure Event Hubs Kafka-compatible)</td></tr>
+      <tr><td>Stream Processing</td><td>Databricks Spark Structured Streaming + AutoLoader</td></tr>
+      <tr><td>Raw Landing</td><td>ADLS Gen2 — Parquet files (partitioned by topic / date)</td></tr>
+      <tr><td>Routing Hub</td><td>Multiplexer Delta Table (kafka_topic, target_table, I/U/D)</td></tr>
+      <tr><td>SCD Processing</td><td>Delta MERGE INTO — SCD1 (latest-wins) or SCD2 (history), per routing config</td></tr>
+      <tr><td>Governance</td><td>Unity Catalog fine-grained permissions + lineage</td></tr>
+      <tr><td>Orchestration</td><td>Databricks Workflows + Control-M (fixed-schedule batch routing)</td></tr>
+      <tr><td>Monitoring</td><td>Spark UI, Job logs, SMTP alerts, processed_flag metrics</td></tr>
+    </tbody>
+  </table>
+
+  <div class="impact-box">
+    <h3>Impact &amp; Outcomes</h3>
+    <ul style="margin-left:20px">
+      <li>Decoupled high-throughput streaming ingestion (Kafka → Parquet) from transformation cost</li>
+      <li>Multiplexer pattern enables a single streaming job to serve all Kafka topics via a central routing table</li>
+      <li>Fixed-schedule batch routing reduces compute spend vs always-on streaming transformation</li>
+      <li>Metadata-driven design — onboarding a new Kafka topic requires only a row insert in the routing config</li>
+      <li>SCD type (1 or 2) is business-requirement driven per downstream table, not hardcoded by layer</li>
+      <li>Idempotent processing via processed_flag and Delta MERGE ensures no duplicate downstream records</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>

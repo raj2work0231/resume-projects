@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project 4 – Enterprise Multi-Source ETL | Architecture</title>
+  <style>
+    :root { --primary: #1a73e8; --accent: #f97316; --dark: #0f172a; --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --border: #334155; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+    header { background: linear-gradient(135deg, #0f172a, #1f2b3e); padding: 40px 24px; border-bottom: 2px solid var(--accent); }
+    header h1 { font-size: 2rem; font-weight: 700; } header h1 span { color: var(--accent); }
+    header p { color: var(--muted); margin-top: 8px; }
+    .back { display: inline-block; margin: 20px 24px; color: var(--primary); text-decoration: none; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 60px; }
+    h2 { font-size: 1.4rem; margin: 40px 0 16px; color: #fff; border-left: 4px solid var(--accent); padding-left: 12px; }
+    p, li { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+    ul { margin-left: 20px; margin-bottom: 12px; }
+    .arch-diagram { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 24px 0; }
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .box { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; font-weight: 600; text-align: center; }
+    .box.src { border-color: #7c3aed; color: #a78bfa; }
+    .box.adf { border-color: var(--primary); color: #60a5fa; }
+    .box.dbx { border-color: #10b981; color: #6ee7b7; }
+    .box.gold { border-color: #d97706; color: #fbbf24; }
+    .box.bi { border-color: var(--accent); color: var(--accent); }
+    .arrow { color: var(--muted); padding: 0 4px; font-size: 1.1rem; }
+    .layer { background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 12px 0; }
+    .layer h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 0.78rem; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.87rem; }
+    th { background: #0f172a; padding: 10px 14px; text-align: left; color: var(--accent); border-bottom: 1px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .impact-box { background: rgba(249,115,22,0.08); border: 1px solid var(--accent); border-radius: 10px; padding: 20px 24px; margin-top: 32px; }
+    .impact-box h3 { color: var(--accent); margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Enterprise <span>Multi-Source ETL Pipeline Platform</span></h1>
+  <p>End-to-end extraction and transformation of transactional data from multiple enterprise source systems (SFTP, SharePoint, APIs) into ADLS Gen2 curated Delta tables, orchestrated by Azure Data Factory and Databricks Workflows.</p>
+</header>
+<a class="back" href="../index.html">← Back to Portfolio</a>
+<div class="container">
+
+  <h2>Solution Overview</h2>
+  <p>This platform ingests transactional data from heterogeneous enterprise sources — SFTP servers (PGP-encrypted), SharePoint document libraries, and internal APIs — standardises it through a Bronze/Silver/Gold pipeline, and delivers curated Delta tables as the single source of truth for operational reporting and near-real-time decision support.</p>
+
+  <h2>Architecture</h2>
+  <div class="arch-diagram">
+    <div class="flow">
+      <div class="box src">SFTP<br/>(PGP)</div>
+      <div class="arrow">→</div>
+      <div class="box adf">Azure Data Factory<br/>Copy / Trigger</div>
+      <div class="arrow">→</div>
+      <div class="box dbx">Databricks<br/>Bronze Ingest</div>
+      <div class="arrow">→</div>
+      <div class="box dbx">Silver<br/>Transform</div>
+      <div class="arrow">→</div>
+      <div class="box gold">Gold<br/>Curated Delta</div>
+      <div class="arrow">→</div>
+      <div class="box bi">Power BI /<br/>Downstream</div>
+    </div>
+    <div class="flow" style="margin-top:12px">
+      <div class="box src">SharePoint /<br/>APIs</div>
+      <div class="arrow">→</div>
+      <div class="box adf">ADF Pipelines</div>
+      <div class="arrow">→</div>
+      <div class="box dbx">Databricks<br/>Workflows</div>
+    </div>
+  </div>
+
+  <h2>Key Components</h2>
+  <div class="layer" style="border-color:var(--primary)">
+    <h4 style="color:#60a5fa">SFTP + PGP Decryption Ingestion</h4>
+    <div class="chips">
+      <span class="chip">ADF SFTP connector</span>
+      <span class="chip">PGP key managed in Azure Key Vault</span>
+      <span class="chip">python-gnupg / pgpy decryption in Databricks</span>
+      <span class="chip">File arrival detection</span>
+      <span class="chip">Audit log per file</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#10b981">
+    <h4 style="color:#6ee7b7">ADF + Databricks Workflow Orchestration</h4>
+    <div class="chips">
+      <span class="chip">ADF triggers Databricks notebook activities</span>
+      <span class="chip">Parameter passing via ADF pipeline variables</span>
+      <span class="chip">Retry policies on each activity</span>
+      <span class="chip">Success / Failure branching</span>
+      <span class="chip">Email alerts on failure</span>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#d97706">
+    <h4 style="color:#fbbf24">Curated Gold Delta Tables</h4>
+    <div class="chips">
+      <span class="chip">Single source of truth</span>
+      <span class="chip">SCD1 / SCD2 patterns</span>
+      <span class="chip">Daily partitioned</span>
+      <span class="chip">1K–10K+ customer records daily</span>
+      <span class="chip">Near-real-time reporting views</span>
+    </div>
+  </div>
+
+  <h2>Technology Stack</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Technology</th></tr></thead>
+    <tbody>
+      <tr><td>Orchestration</td><td>Azure Data Factory (pipelines, triggers)</td></tr>
+      <tr><td>Compute</td><td>Azure Databricks Workflows + Job Clusters</td></tr>
+      <tr><td>Storage</td><td>ADLS Gen2 + Delta Lake</td></tr>
+      <tr><td>Security</td><td>PGP encryption/decryption, Azure Key Vault</td></tr>
+      <tr><td>Sources</td><td>SFTP servers, SharePoint, REST APIs</td></tr>
+      <tr><td>Reporting</td><td>Power BI, downstream API consumers</td></tr>
+    </tbody>
+  </table>
+
+  <div class="impact-box">
+    <h3>Impact &amp; Outcomes</h3>
+    <ul style="margin-left:20px">
+      <li>Curated Delta tables became the single source of truth for order processing</li>
+      <li>Impacted 1,000–10,000+ customer records daily with near-real-time visibility</li>
+      <li>Automated secure data exchange replacing manual SFTP file handling</li>
+      <li>End-to-end audit trail via file tracking and ADF run logs</li>
+      <li>Supported fulfilment, service updates, and issue resolution workflows</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
