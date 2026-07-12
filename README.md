@@ -1,5 +1,9 @@
 # Data Engineering Portfolio — Azure Databricks & PySpark
-<img width="316" height="328" alt="image" src="https://github.com/user-attachments/assets/123929b7-9852-4836-b976-ff10857fb2c4" />
+<img width="941" height="219" alt="image" src="https://github.com/user-attachments/assets/83f5c84f-65d3-464e-9860-ce1f78bc7427" />
+<img width="941" height="406" alt="image" src="https://github.com/user-attachments/assets/d9628b74-1894-45ee-9b5d-b71e058c2214" />
+<img width="941" height="363" alt="image" src="https://github.com/user-attachments/assets/04ee22d4-1093-4389-a361-8c8b8d5c6273" />
+
+
 
 
 
