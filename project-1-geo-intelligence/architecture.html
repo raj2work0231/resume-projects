@@ -170,9 +170,7 @@
 
 Child Notebook
 ├── Read campaign parameters
-├── AutoLoader ingest → Bronze
-├── H3 spatial join → Silver
-├── Write enriched output → Gold
+├── Process and Write enriched output → Gold
 └── Write status (SUCCESS / FAILED / PARTIAL) → control table</div>
 
   <h2>SCD Type 2 Implementation</h2>
@@ -204,7 +202,6 @@ Child Notebook
       <h4 style="color:var(--primary)">Storage Tuning</h4>
       <ul style="margin-left:16px;margin-top:8px">
         <li>Liquid Clustering on geo spatial join keys</li>
-        <li>ZORDER on h3_index + campaign_id</li>
         <li>OPTIMIZE &amp; VACUUM scheduled jobs</li>
         <li>Partition pruning on ingest_date</li>
       </ul>
