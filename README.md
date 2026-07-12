@@ -1,5 +1,10 @@
 # Data Engineering Portfolio — Azure Databricks & PySpark
-<img width="881" height="420" alt="image" src="https://github.com/user-attachments/assets/6c7a774e-3624-441e-bbb3-7b20b18c0f45" />
+<img width="502" height="397" alt="image" src="https://github.com/user-attachments/assets/39d6691d-7614-4851-81f5-0c658a2b9bd8" />
+<img width="474" height="242" alt="image" src="https://github.com/user-attachments/assets/28f5d507-52d4-4cc1-b954-49e575cbcefb" />
+<img width="480" height="260" alt="image" src="https://github.com/user-attachments/assets/83d8b37c-ec9a-460a-b811-2fd7fb32b910" />
+<img width="463" height="234" alt="image" src="https://github.com/user-attachments/assets/49d50d8d-5c1d-4fcf-9956-11c6d6555b2b" />
+
+
 
 > **Senior Data Engineer** | 7+ years building production-grade pipelines on Azure Databricks, Delta Lake, Apache Kafka, and PySpark for large-scale enterprise workloads.
 
