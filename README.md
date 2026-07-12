@@ -2,10 +2,8 @@
 <img width="941" height="219" alt="image" src="https://github.com/user-attachments/assets/83f5c84f-65d3-464e-9860-ce1f78bc7427" />
 <img width="941" height="406" alt="image" src="https://github.com/user-attachments/assets/d9628b74-1894-45ee-9b5d-b71e058c2214" />
 <img width="941" height="363" alt="image" src="https://github.com/user-attachments/assets/04ee22d4-1093-4389-a361-8c8b8d5c6273" />
-
-
-
-
+<img width="941" height="389" alt="image" src="https://github.com/user-attachments/assets/daeccbce-fdac-4f36-aa96-6a76d6134cbf" />
+<img width="941" height="341" alt="image" src="https://github.com/user-attachments/assets/874167a7-1bf6-40c8-ac94-c78e3b39702f" />
 
 
 > **Senior Data Engineer** | 7+ years building production-grade pipelines on Azure Databricks, Delta Lake, Apache Kafka, and PySpark for large-scale enterprise workloads.
